@@ -12,8 +12,9 @@ NameAndPosition = collections.namedtuple('NameAndPosition','name position')
 
 # hardcode for now, later grab from command line
 input_html_file = ".\\airport_builder\\Airport Builder.html"
-input_twee_file = ".\\story.twee"
-output_file= ".\\story.twee.post.process"
+twee_file_base=".\\story"
+input_twee_file = f'{twee_file_base}.twee'
+output_file= f'{twee_file_base}.position.twee'
 
 def getPositonFromTwineHtmlOutput(twineHtmlOutputFile):
     soup = None
@@ -31,16 +32,29 @@ def getPositonFromTwineHtmlOutput(twineHtmlOutputFile):
     return data
 
 def addPositionCommentsToTweeOutput(nameAndPositions,tweeOutputFile):
-    # read file
-    # walk line by line and match on nameAndPosition
-    # insert line with position as comments
+    lines = open(input_twee_file).readlines()
+    output = []
+    nameToPos = dict(nameAndPositions)
+    for line in lines:
+        output.append(line)
+        # echo existing line to output
+        nameCandidate = line.split(":: ")
+        isName = len(nameCandidate) == 2
+        if not isName:
+            continue
+        name = nameCandidate[1].strip()
+        if name in nameToPos:
+            # write out the position.
+            positionOutput = f'+ /* POSITION: {nameToPos[name]} */\n' # TBD what's teh story with the \n's
+            print (positionOutput)
+            output.append(positionOutput)
+        else:
+            print (f"ERROR: {name} found in twee file but no position data")
 
-
-
-
+    # open(output_file,"w",lines)
+    open(output_file,"w").writelines(output)
+    
+    return
 
 data = getPositonFromTwineHtmlOutput(input_html_file)
-# addPositionCommentsToTweeOutput
-# re-write twee file with comments
-for d in data: print(d)
-
+addPositionCommentsToTweeOutput(data,output_file)
