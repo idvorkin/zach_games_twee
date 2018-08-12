@@ -8,15 +8,16 @@
 #
 
 
-[[source]]
+# Rant - some bug with black -
+# Need to run the following till fixed. pipenv lock --pre --clear
+# https://github.com/ambv/black/issues/209
 
+[[source]]
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 pendulum = "*"
 pdfrw = "*"
 schedule = "*"
@@ -26,6 +27,7 @@ yapf = "*"
 black = "*"
 ftfy = "*"
 ipython = "*"
-
+beautifulsoup4 = "*"
 
 [dev-packages]
+black = "*"
