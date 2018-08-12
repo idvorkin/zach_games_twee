@@ -1,10 +1,8 @@
 
-# 1) Read position data out
-# 2) Write back into twee file (tricky)
-# 3)  Write to file
 from bs4 import BeautifulSoup
 import collections
 
+# TODO: Support the other attributes like size and tags.
 NameAndPosition = collections.namedtuple('NameAndPosition','name position')
 
 # 1) Read twine->html output, add position to twee output in comments.
@@ -55,6 +53,11 @@ def addPositionCommentsToTweeOutput(nameAndPositions,tweeOutputFile):
     open(output_file,"w").writelines(output)
     
     return
+# Interesting idea - skip the middle input file with twee, do input to output.
+def addPositionDataToTweeHtmlOutput(nameAndPosition):
+    nameToPos = dict(nameAndPositions)
+    with open(output_twee_html_file,errors='ignore') as fp:
+        soup = BeautifulSoup(fp, 'html.parser')
 
 data = getPositonFromTwineHtmlOutput(input_html_file)
 addPositionCommentsToTweeOutput(data,output_file)
