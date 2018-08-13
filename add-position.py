@@ -2,10 +2,6 @@ from attr import dataclass
 from bs4 import BeautifulSoup
 import collections
 
-# TODO: Support the other attributes like size and tags.
-NameAndPosition = collections.namedtuple("NameAndPosition", "name position")
-
-
 @dataclass
 class PerPassageDisplayAttributes:
     name: str
@@ -35,22 +31,40 @@ class PassageDisplayAttributes:
 # 1) Read twine->html output, add position to twee output in comments.
 # 2) Read twee+position_comments, load position comments,  re-apply position to twee->html output.
 
-# hardcode for now, later grab from command line
-twine_export_file = ".\\airport_builder\\Airport Builder.html"
-twee_file_base = ".\\story"
-twee_file = f"{twee_file_base}.twee"
-twee_position_file = f"{twee_file_base}.position.twee"
-twee_html_file = f"{twee_file_base}.html"
-twee_html_position_file = f"{twee_file_base}.position.html"
+
+def twee_get_passage_name(line):
+    name_candidate = line.split(":: ")
+    is_passage_name = len(name_candidate) == 2
+    if not is_passage_name:
+        return None
+    return name_candidate[1].strip()
 
 
-def getPositionFromTweeFile(tweeFile):
+def twee_get_display_attributes(line):
+    return False
+
+def twee_encode_display_attributes(attributes:PerPassageDisplayAttributes)->str:
+    return f"/*DA:{attributes}*/"
+
+def get_display_attributes_from_twee_file(twee_position_file):
     # it's a passage if starts w/::
     # it's a passage if starts w/::
-    pass
+
+    ret = PassageDisplayAttributes()
+    lines = open(twee_position_file).readlines()
+    last_passage_name = ""
+    for line in lines:
+        name = twee_get_passage_name(line)
+        if name:
+            last_passage_name = name
+        display_attributes = twee_get_display_attributes(line)
+        attribs = PerPassageDisplayAttributes(
+            name=last_passage_name, position=display_attributes
+        )
+        ret.add(last_passage_name, attribs)
 
 
-def getPositonFromTwineHtmlOutput(twineHtmlOutputFile):
+def get_display_attributes_from_twine_file(twineHtmlOutputFile):
     with open(twineHtmlOutputFile, encoding="utf-8") as fp:
         soup = BeautifulSoup(fp, "html.parser")
 
@@ -66,56 +80,67 @@ def getPositonFromTwineHtmlOutput(twineHtmlOutputFile):
     return ret
 
 
-def addPositionCommentsToTweeOutput(
+def add_display_attributes_to_twee_file(
     displayAttributes: PassageDisplayAttributes, twee_file, tweeOutputFile
 ):
-    lines = open(twee_file).readlines()
+    lines = open(twee_file, encoding="utf-8").readlines()
     output = []
     for line in lines:
+        # ERROR IF WE FIND
+        if twee_get_display_attributes(line):
+            raise FileExistsError(f"{twee_file} already contains position data")
+
         output.append(line)
-        # echo existing line to output
-        name_candidate = line.split(":: ")
-        is_passage_name = len(name_candidate) == 2
-        if not is_passage_name:
+        name = twee_get_passage_name(line)
+        if not name:
             continue
-        name = name_candidate[1].strip()
-        if displayAttributes.contains(name):
-            # write out the position.
-            positionOutput = (
-                f"+ /* POSITION: {displayAttributes.get(name)} */\n"
-            )  # TBD what's teh story with the \n's
-            print(positionOutput)
-            output.append(positionOutput)
-        else:
+
+        if not displayAttributes.contains(name):
             print(f"ERROR: {name} found in twee file but no position data")
+            continue
 
-    # open(output_file,"w",lines)
-    open(tweeOutputFile, "w").writelines(output)
+        # write out the position.
+        # TODO extract this to a place we can reverse it.
+        position_output = twee_encode_display_attributes(displayAttributes.get(name))
+        print(position_output)
+        output.append(position_output)
 
-    return
+    open(tweeOutputFile, "w", encoding="utf-8").writelines(output)
 
 
-# Interesting idea - skip the middle input file with twee, do input to output.
-def addPositionDataToTweeHtmlOutput(
-    displayAttributes: PassageDisplayAttributes, generatedHtmlFile, outputFile
+def add_display_attributes_to_twine_file(
+    displayAttributes: PassageDisplayAttributes, twine_file, output_twine_file
 ):
-    with open(generatedHtmlFile, encoding="utf-8") as fp:
+    with open(twine_file, encoding="utf-8") as fp:
         soup = BeautifulSoup(fp, "html.parser")
 
     passages = soup.find_all("tw-passagedata")
+
     for p in passages:
+        if p["position"]:
+            # raise FileExistsError(f"{twine_file} already contains position data")
+            print (f"{twine_file} already contains position data for {p['name']}")
+
         output_passage_name = p["name"]
         if displayAttributes.contains(output_passage_name):
-            p["position"] = displayAttributes.get(output_passage_name)
+            p["position"] = displayAttributes.get(output_passage_name).position
         else:
             print(
-                f"ERROR: {output_passage_name} found in twee file but no position data"
+                f"ERROR: {output_passage_name} found in twine file but no position data"
             )
 
-    with open(outputFile, "w", encoding="utf-8") as file:
+    with open(output_twine_file, "w", encoding="utf-8") as file:
         file.write(str(soup))
 
 
-data = getPositonFromTwineHtmlOutput(twine_export_file)
-addPositionCommentsToTweeOutput(data, twee_file, twee_position_file)
-addPositionDataToTweeHtmlOutput(data, twee_html_file, twee_html_position_file)
+# hardcode for now, later grab from command line
+twine_export_file = ".\\airport_builder\\Airport Builder.html"
+twee_file_base = ".\\story"
+twee_file = f"{twee_file_base}.twee"
+twee_position_file = f"{twee_file_base}.position.twee"
+twee_html_file = f"{twee_file_base}.exported.html"
+twee_html_position_file = f"{twee_file_base}.exported.position.html"
+
+data = get_display_attributes_from_twine_file(twine_export_file)
+add_display_attributes_to_twine_file(data, twee_html_file, twee_html_position_file)
+add_display_attributes_to_twee_file(data, twee_file, twee_position_file)
