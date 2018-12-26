@@ -2,6 +2,7 @@ from attr import dataclass
 from bs4 import BeautifulSoup
 import collections
 
+
 @dataclass
 class PerPassageDisplayAttributes:
     name: str
@@ -43,8 +44,10 @@ def twee_get_passage_name(line):
 def twee_get_display_attributes(line):
     return False
 
-def twee_encode_display_attributes(attributes:PerPassageDisplayAttributes)->str:
+
+def twee_encode_display_attributes(attributes: PerPassageDisplayAttributes) -> str:
     return f"/*DA:{attributes}*/"
+
 
 def get_display_attributes_from_twee_file(twee_position_file):
     # it's a passage if starts w/::
@@ -119,7 +122,7 @@ def add_display_attributes_to_twine_file(
     for p in passages:
         if p["position"]:
             # raise FileExistsError(f"{twine_file} already contains position data")
-            print (f"{twine_file} already contains position data for {p['name']}")
+            print(f"{twine_file} already contains position data for {p['name']}")
 
         output_passage_name = p["name"]
         if displayAttributes.contains(output_passage_name):

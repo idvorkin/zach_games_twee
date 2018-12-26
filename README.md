@@ -13,8 +13,8 @@ This repo contains twee.bat which calls ```\tweego\tweego.exe```
 
 Decompile story format from twine
 
-    twee story.html >> story.twee
+    twee story.html -d > story.twee
 
 Compile twee story to something twine can import (using sugar cube format)
 
-    twee -f sugarcube-2 -o story.html story.twee
+    twee -f sugarcube-2 -o story.exported.html story.twee --start start

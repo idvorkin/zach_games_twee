@@ -6,8 +6,6 @@
 # C:\> pipenv --venv
 # vs_code_command_pallette> Select WorkSpace Interpreter
 #
-
-
 # Rant - some bug with black -
 # Need to run the following till fixed. pipenv lock --pre --clear
 # https://github.com/ambv/black/issues/209
@@ -28,6 +26,9 @@ black = "*"
 ftfy = "*"
 ipython = "*"
 beautifulsoup4 = "*"
+mypy = "*"
 
 [dev-packages]
-black = "*"
+
+[pipenv]
+allow_prereleases = true
